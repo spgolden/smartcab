@@ -21,37 +21,45 @@ class LearningAgent(Agent):
         # TODO: Initialize any additional variables here
         #self.destination = self.env.agent_states(self)
 
+    def unpackState(self, state):
+        return (
+            state.get('light', None), 
+            state.get('oncoming', None), 
+            state.get('right', None), 
+            state.get('left', None)
+        )
+
     def getScore(self, state, action):
         # returns 0 as default
-        return self.q.get((state, action), 0.0)
+        return self.q.get((self.unpackState(state), action), 0.0)
 
     def getMaxScore(self, state):
         return max([self.getScore(state, a) for a in Environment.valid_actions[1:]])
 
-    def learn(self, state1, action1, reward, state2):
+    def learn(self, state1, action, reward, state2):
         expected_reward = self.getMaxScore(state2)
         expected_reward = expected_reward * self.gamma
 
-        old_q = self.q.get((state, action), None)
+        old_q = self.q.get((self.unpackState(state1), action), None)
         if old_q is None:
             # add the current reward
-            self.q[(state, action)] = reward
+            self.q[(self.unpackState(state1), action)] = reward
         else:
             # blend them using the learning discount
-            self.q[(state, action)] = old_q + self.alpha * (reward - expected_reward)
+            self.q[(self.unpackState(state1), action)] = old_q + self.alpha * (reward - expected_reward)
 
     def think(self, state):
         #Think! Let us see whether to we should randomly explore or go with our table
         if random.random() < self.epsilon:
             # walk randomly
-            action = random.choise(Environment.valid_actions[1:])
+            action = random.choice(Environment.valid_actions[1:])
         else:
             # do the smart thing
             scores = [self.getScore(state, a) for a in Environment.valid_actions[1:]]
             max_score = max(scores)
 
             # sometimes we get ties, like all 0's
-            if len(scores[max_score]) > 1:
+            if scores.count(max_score) > 1:
                 # randomly pick from the best
                 idx = random.choice([a for a in range(0, len(Environment.valid_actions[1:])) if scores[a] == max_score])
             else:
