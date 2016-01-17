@@ -29,33 +29,33 @@ class LearningAgent(Agent):
             state.get('left', None)
         )
 
-    def getScore(self, state, action):
+    def getScore(self, state, action, deadline):
         # returns 0 as default
-        return self.q.get((self.unpackState(state), action), 0.0)
+        return self.q.get((self.unpackState(state), action, deadline), 0.0)
 
-    def getMaxScore(self, state):
-        return max([self.getScore(state, a) for a in Environment.valid_actions[1:]])
+    def getMaxScore(self, state, deadline):
+        return max([self.getScore(state, a, deadline) for a in Environment.valid_actions[1:]])
 
-    def learn(self, state1, action, reward, state2):
-        expected_reward = self.getMaxScore(state2)
+    def learn(self, state1, action, reward, state2, deadline):
+        expected_reward = self.getMaxScore(state2, deadline)
         expected_reward = expected_reward * self.gamma
 
-        old_q = self.q.get((self.unpackState(state1), action), None)
+        old_q = self.q.get((self.unpackState(state1), action, deadline), None)
         if old_q is None:
             # add the current reward
-            self.q[(self.unpackState(state1), action)] = reward
+            self.q[(self.unpackState(state1), action, deadline)] = reward
         else:
             # blend them using the learning discount
-            self.q[(self.unpackState(state1), action)] = old_q + self.alpha * (reward - expected_reward)
+            self.q[(self.unpackState(state1), action, deadline)] = old_q + self.alpha * (reward - expected_reward)
 
-    def think(self, state):
+    def think(self, state, deadline):
         #Think! Let us see whether to we should randomly explore or go with our table
         if random.random() < self.epsilon:
             # walk randomly
             action = random.choice(Environment.valid_actions[1:])
         else:
             # do the smart thing
-            scores = [self.getScore(state, a) for a in Environment.valid_actions[1:]]
+            scores = [self.getScore(state, a, deadline) for a in Environment.valid_actions[1:]]
             max_score = max(scores)
 
             # sometimes we get ties, like all 0's
@@ -96,13 +96,13 @@ class LearningAgent(Agent):
         action = None
         if action_okay:
             action = self.next_waypoint
-            self.next_waypoint = self.think(inputs)
+            self.next_waypoint = self.think(inputs, deadline)
 
         # Execute action and get reward
         reward = self.env.act(self, action)
 
         # TODO: Learn policy based on state, action, reward
-        self.learn(inputs, self.next_waypoint, reward, self.env.sense(self))
+        self.learn(inputs, self.next_waypoint, reward, self.env.sense(self), deadline)
 
         print "LearningAgent.update(): deadline = {}, inputs = {}, action = {}, reward = {}".format(deadline, inputs, action, reward)  # [debug]
 
@@ -116,7 +116,7 @@ def run():
     e.set_primary_agent(a, enforce_deadline=False)  # set agent to track
 
     # Now simulate it
-    sim = Simulator(e, update_delay=1.0)  # reduce update_delay to speed up simulation
+    sim = Simulator(e, update_delay=0.1)  # reduce update_delay to speed up simulation
     sim.run(n_trials=10)  # press Esc or close pygame window to quit
 
 
