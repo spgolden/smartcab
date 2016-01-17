@@ -17,6 +17,4 @@ OR:
 
 ```python -m smartcab.agent```
 
-## Develop
 
-Open `agent.py` and implement `LearningAgent`. Follow the `TODO`s in there for further instructions.
