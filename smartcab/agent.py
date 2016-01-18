@@ -79,24 +79,8 @@ class LearningAgent(Agent):
         inputs = self.env.sense(self)
         deadline = self.env.get_deadline(self)
 
-        # TODO: Update state
-        
-        # TODO: Select action according to your policy
-        action_okay = True
-        if self.next_waypoint == 'right':
-            if inputs['light'] == 'red' and inputs['left'] == 'forward':
-                action_okay = False
-        elif self.next_waypoint == 'straight':
-            if inputs['light'] == 'red':
-                action_okay = False
-        elif self.next_waypoint == 'left':
-            if inputs['light'] == 'red' or (inputs['oncoming'] == 'forward' or inputs['oncoming'] == 'right'):
-                action_okay = False
-
-        action = None
-        if action_okay:
-            action = self.next_waypoint
-            self.next_waypoint = self.think(inputs, deadline)
+        action = self.think(inputs, deadline)
+        self.next_waypoint = action
 
         # Execute action and get reward
         reward = self.env.act(self, action)
