@@ -10,9 +10,9 @@ I decided to use the following inputs:
 * Oncoming
 * Right
 * Left
-* Deadline
+* Next waypoint
 
-I think that the light status, the oncoming status, what's to the left, and what's to the right are important for the agent to learn about the traffic rules of the road. The deadline I initially left out because I thought it might add to much complexity to the lookup table, but I ended up adding it. I added deadline because it would be important for the agent to learn a "sense of urgency" as the deadline approaches. Maybe it's worth running a red light here or there if the deadline is nearing.
+I think that the light status, the oncoming status, what's to the left, and what's to the right are important for the agent to learn about the traffic rules of the road. I added the next waypoint because it would be important for the agent to learn where it's going.
 
 ### How does Q-learning affect the agent?
 
@@ -26,7 +26,7 @@ I have added some inputs to the learning function:
 * alpha
 * gamma
 
-These parameters affect the tradeoff between exploration and explotation, the learning decay rate, and the future discount on rewards, respectively. Let's dig into Epsilon. This paramater essentially sets the number of times the agent will make a random move, regardless of what it has learned. This is important because there may be unexplored states and the agent could get stuck in a local maxima. In think, if a random number comes back less than epsilon, than the agent is not greeding but decides to explore. Otherwise, he looks for the max score. 
+These parameters affect the tradeoff between exploration and explotation, the learning decay rate, and the future discount on rewards, respectively. Let's dig into Epsilon. This paramater essentially sets the number of times the agent will make a random move, regardless of what it has learned. This is important because there may be unexplored states and the agent could get stuck in a local maxima. In think, if a random number comes back less than epsilon, than the agent is not greeding but decides to explore. Otherwise, he looks for the max score. After some experimentation, I lowered epsilon to 0.05 as the agent seems to pick up the rules faster than I originally anticipated, needing less exploration.
 
 When learning about the world, the agent gathers information every move. Early on, he goes from knowing nothing (0) to knowing something - the reward. However, as the agent continues to revisit a state, the additional information adds less to his knowledge and is discounted by alpha as a result. In this way, we start zeroing in on the expected value instead of constantly jumping from reward to reward - approaching a stable estimate earlier on in the process.
 

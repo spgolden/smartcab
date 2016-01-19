@@ -13,7 +13,7 @@ class LearningAgent(Agent):
         self.q = {}
         self.last_waypoint = None
         # amount of exploration to do
-        self.epsilon = 0.1
+        self.epsilon = 0.05
         # learning discount
         self.alpha = 0.2
         # discount for future awards
@@ -29,33 +29,33 @@ class LearningAgent(Agent):
             state.get('left', None)
         )
 
-    def getScore(self, state, action, deadline):
+    def getScore(self, state, action, next_waypoint):
         # returns 0 as default
-        return self.q.get((self.unpackState(state), action, deadline), 0.0)
+        return self.q.get((self.unpackState(state), action, next_waypoint), 0.0)
 
-    def getMaxScore(self, state, deadline):
-        return max([self.getScore(state, a, deadline) for a in Environment.valid_actions[1:]])
+    def getMaxScore(self, state, next_waypoint):
+        return max([self.getScore(state, a, next_waypoint) for a in Environment.valid_actions[1:]])
 
-    def learn(self, state1, action, reward, state2, deadline):
-        expected_reward = self.getMaxScore(state2, deadline)
+    def learn(self, state1, action, reward, state2, next_waypoint):
+        expected_reward = self.getMaxScore(state2, next_waypoint)
         expected_reward = expected_reward * self.gamma
 
-        old_q = self.q.get((self.unpackState(state1), action, deadline), None)
+        old_q = self.q.get((self.unpackState(state1), action, next_waypoint), None)
         if old_q is None:
             # add the current reward
-            self.q[(self.unpackState(state1), action, deadline)] = reward
+            self.q[(self.unpackState(state1), action, next_waypoint)] = reward
         else:
             # blend them using the learning discount
-            self.q[(self.unpackState(state1), action, deadline)] = old_q + self.alpha * (reward - expected_reward)
+            self.q[(self.unpackState(state1), action, next_waypoint)] = old_q + self.alpha * (reward - expected_reward)
 
-    def think(self, state, deadline):
+    def think(self, state, next_waypoint):
         #Think! Let us see whether to we should randomly explore or go with our table
         if random.random() < self.epsilon:
             # walk randomly
             action = random.choice(Environment.valid_actions[1:])
         else:
             # do the smart thing
-            scores = [self.getScore(state, a, deadline) for a in Environment.valid_actions[1:]]
+            scores = [self.getScore(state, a, next_waypoint) for a in Environment.valid_actions[1:]]
             max_score = max(scores)
 
             # sometimes we get ties, like all 0's
@@ -79,14 +79,13 @@ class LearningAgent(Agent):
         inputs = self.env.sense(self)
         deadline = self.env.get_deadline(self)
 
-        action = self.think(inputs, deadline)
-        self.next_waypoint = action
+        action = self.think(inputs, self.next_waypoint)
 
         # Execute action and get reward
         reward = self.env.act(self, action)
 
         # TODO: Learn policy based on state, action, reward
-        self.learn(inputs, self.next_waypoint, reward, self.env.sense(self), deadline)
+        self.learn(inputs, action, reward, self.env.sense(self), self.next_waypoint)
 
         print "LearningAgent.update(): deadline = {}, inputs = {}, action = {}, reward = {}".format(deadline, inputs, action, reward)  # [debug]
 
